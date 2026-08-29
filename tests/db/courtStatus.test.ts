@@ -149,6 +149,26 @@ describe('report validation trigger', () => {
   })
 })
 
+describe('reservable_free with count_free = 0 ("all courts taken")', () => {
+  it('is distinguishable in court_status from no report at all (max() of zero rows is null, not 0)', async () => {
+    const reportedTaken = await idFor('hamilton')
+    await asAnon((client) =>
+      client.query('insert into reports (location_id, report_type, count_free, device_id) values ($1,$2,$3,$4)', [
+        reportedTaken,
+        'reservable_free',
+        0,
+        randomUUID(),
+      ]),
+    )
+    const taken = await admin.query('select max_count_free from court_status where id = $1', [reportedTaken])
+    expect(taken.rows[0].max_count_free).toBe(0)
+
+    const neverReported = await idFor('jackson')
+    const unset = await admin.query('select max_count_free from court_status where id = $1', [neverReported])
+    expect(unset.rows[0].max_count_free).toBeNull()
+  })
+})
+
 describe('TTL decay in court_status (the "reverts to no report over time" behavior)', () => {
   it('drops a queue_length report once it is older than the 60-minute TTL', async () => {
     const locationId = await idFor('douglass')

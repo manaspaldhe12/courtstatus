@@ -25,7 +25,10 @@ export function reservableStatusHtml(params: {
     return `<div class="status status-external">${label}${link}</div>`
   }
 
-  if (maxCountFree && maxCountFree > 0) {
+  if (maxCountFree != null) {
+    if (maxCountFree === 0) {
+      return `<div class="status status-taken">${label} — all reported taken (${minutesAgo(lastFreeReportAt)})</div>`
+    }
     return `<div class="status status-free">${maxCountFree} of ${numReservable} reported free (${minutesAgo(lastFreeReportAt)})</div>`
   }
   return `<div class="status status-unknown">${label} — no recent "free" report</div>`

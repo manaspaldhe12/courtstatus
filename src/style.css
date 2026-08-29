@@ -92,6 +92,10 @@ body {
   color: var(--green);
 }
 
+.status-taken {
+  color: var(--amber);
+}
+
 .status-queue {
   color: var(--blue);
 }

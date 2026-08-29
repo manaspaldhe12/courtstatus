@@ -67,6 +67,28 @@ describe('reservableStatusHtml', () => {
     expect(html).toContain('status-free')
   })
 
+  it('distinguishes "0 free reported" (all taken) from "no report at all" (regression: 0 is falsy)', () => {
+    const allTaken = reservableStatusHtml({
+      numReservable: 3,
+      crowdReportable: true,
+      maxCountFree: 0,
+      lastFreeReportAt: new Date().toISOString(),
+      reservationUrl: null,
+    })
+    expect(allTaken).toContain('all reported taken')
+    expect(allTaken).toContain('status-taken')
+    expect(allTaken).not.toContain('no recent "free" report')
+
+    const noReport = reservableStatusHtml({
+      numReservable: 3,
+      crowdReportable: true,
+      maxCountFree: null,
+      lastFreeReportAt: null,
+      reservationUrl: null,
+    })
+    expect(noReport).toContain('no recent "free" report')
+  })
+
   it('renders a booking link for external (non-crowd-reportable) locations', () => {
     const html = reservableStatusHtml({
       numReservable: 16,
