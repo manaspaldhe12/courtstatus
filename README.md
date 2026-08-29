@@ -31,10 +31,13 @@ Steps:
 1. Create a new Supabase project (free tier is enough — see note below).
 2. In the SQL Editor, run `supabase/migrations/0001_init.sql`, then `supabase/seed.sql`.
 3. Copy the Project URL and anon key from Project Settings → API.
-4. In this GitHub repo: **Settings → Secrets and variables → Actions → Variables**,
-   add `SUPABASE_URL` and `SUPABASE_ANON_KEY` with those two values. (Repo
-   *variables*, not secrets, is correct — the anon key is meant to be public;
-   it ships inside the built frontend either way.)
+4. In this GitHub repo: **Settings → Secrets and variables → Actions → Secrets**,
+   add `SUPABASE_URL` and `SUPABASE_ANON_KEY` with those two values. Using
+   Actions *secrets* here is just to keep them out of workflow logs — it
+   doesn't change the actual security model, since the anon key still ends
+   up embedded in the built frontend bundle either way (that's expected;
+   the anon key is meant to be public, and Row Level Security in
+   `0001_init.sql` is what actually restricts access).
 5. **Settings → Pages → Source: GitHub Actions.**
 
 Push to `main` and the `deploy.yml` workflow builds and publishes to
@@ -46,7 +49,7 @@ Supabase's free plan pauses a project after 7 days with no activity, which
 would otherwise mean the first visitor after a quiet week hits a dead API.
 `.github/workflows/keep-alive.yml` runs a weekly no-op read against the
 project to prevent that — no action needed once `SUPABASE_URL` /
-`SUPABASE_ANON_KEY` are set as repo variables (step 4 above covers both
+`SUPABASE_ANON_KEY` are set as repo secrets (step 4 above covers both
 workflows).
 
 ## Local development
