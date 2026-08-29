@@ -29,16 +29,24 @@ export function openReportModal(location: CourtStatus): void {
               </label>`
             : `<input type="hidden" name="report_type" value="${availableTypes[0]}" />`
         }
-        <div class="field field-reservable_free">
-          <label>Reservable courts free right now
-            <input type="number" name="count_free" min="0" max="${location.num_reservable}" value="1" />
-          </label>
-        </div>
-        <div class="field field-queue_length">
-          <label>People/groups waiting for a walk-up court
-            <input type="number" name="queue_length" min="0" max="30" value="0" />
-          </label>
-        </div>
+        ${
+          availableTypes.includes('reservable_free')
+            ? `<div class="field field-reservable_free">
+                <label>Reservable courts free right now
+                  <input type="number" name="count_free" min="0" max="${location.num_reservable}" value="1" />
+                </label>
+              </div>`
+            : ''
+        }
+        ${
+          availableTypes.includes('queue_length')
+            ? `<div class="field field-queue_length">
+                <label>People/groups waiting for a walk-up court
+                  <input type="number" name="queue_length" min="0" max="30" value="0" />
+                </label>
+              </div>`
+            : ''
+        }
         <p class="form-error" role="alert"></p>
         <div class="modal-actions">
           <button type="button" class="btn-secondary cancel-btn">Cancel</button>
@@ -50,14 +58,23 @@ export function openReportModal(location: CourtStatus): void {
 
   const form = overlay.querySelector('.report-form') as HTMLFormElement
   const select = form.querySelector('select[name="report_type"]') as HTMLSelectElement | null
-  const reservableField = form.querySelector('.field-reservable_free') as HTMLElement
-  const queueField = form.querySelector('.field-queue_length') as HTMLElement
+  const reservableField = form.querySelector('.field-reservable_free') as HTMLElement | null
+  const queueField = form.querySelector('.field-queue_length') as HTMLElement | null
   const errorEl = form.querySelector('.form-error') as HTMLElement
+
+  // Toggle both visibility AND disabled: a display:none field is still
+  // validated (and can silently block submit) unless it's also disabled.
+  const setFieldActive = (field: HTMLElement | null, active: boolean) => {
+    if (!field) return
+    field.style.display = active ? '' : 'none'
+    const input = field.querySelector('input') as HTMLInputElement | null
+    if (input) input.disabled = !active
+  }
 
   const syncFields = () => {
     const type = (select?.value ?? availableTypes[0]) as ReportType
-    reservableField.style.display = type === 'reservable_free' ? '' : 'none'
-    queueField.style.display = type === 'queue_length' ? '' : 'none'
+    setFieldActive(reservableField, type === 'reservable_free')
+    setFieldActive(queueField, type === 'queue_length')
   }
   syncFields()
   select?.addEventListener('change', syncFields)
