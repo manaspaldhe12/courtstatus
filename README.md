@@ -31,11 +31,15 @@ Court directory data from [SF Rec & Park](https://www.sfrecpark.org/1446/Tennis-
     it. If a newer report comes in first, it replaces the old one immediately.
 - **Walk-up courts**: a report says "N people/groups are waiting." The card
   shows the average of the **last 3** reports within the last **60 minutes**,
-  plus an estimated wait at 15 minutes/group. Example lifecycle for a single
-  court with no further reports after the one below:
+  plus an estimated wait of `(queue length / number of walk-up courts) × ~60
+  minutes` — a group typically holds a court for about an hour, and courts
+  turn over in parallel, so more courts shortens the wait and more groups
+  waiting lengthens it (a flat per-group constant would ignore court count
+  entirely). Example lifecycle for a single court with no further reports
+  after the one below:
   ```
-  t+0:    "1 walk-up court — queue ~2 (est. 30 min wait, just now)"
-  t+30m:  "1 walk-up court — queue ~2 (est. 30 min wait, 30 min ago)"
+  t+0:    "1 walk-up court — queue ~2 (est. 120 min wait, just now)"
+  t+30m:  "1 walk-up court — queue ~2 (est. 120 min wait, 30 min ago)"
   t+61m:  "1 walk-up court — no recent queue report"
   ```
   The `~2` average, the ETA, and the "N min ago" timestamp are all derived
@@ -134,7 +138,7 @@ npm run test:watch
 + `supabase/seed.sql` against a throwaway Postgres and asserts against real
 SQL, not a JS reimplementation of it. This is what actually proves the
 TTL-decay logic in the `court_status` view is correct — including the exact
-behavior asked for: a status like `queue ~2 (est. 30 min wait, 1 min ago)`
+behavior asked for: a status like `queue ~2 (est. 120 min wait, 1 min ago)`
 reverting to "no recent report" once enough time passes. Rather than waiting
 45–60 real minutes, the tests insert reports with an explicit backdated
 `created_at` (as the table owner, bypassing RLS) to simulate elapsed time

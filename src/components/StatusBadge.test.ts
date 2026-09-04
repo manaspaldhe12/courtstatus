@@ -125,14 +125,23 @@ describe('walkupStatusHtml', () => {
     expect(html).toContain('no recent queue report')
   })
 
-  it('computes an ETA at 15 minutes per group from the average queue length', () => {
-    const html = walkupStatusHtml({
+  it('computes an ETA as queueLength / numWalkup rounds of ~60 minutes each', () => {
+    // 2 courts turning over in parallel clear a queue of 2 in about one
+    // 60-minute round, not the same wait a single court would have.
+    const twoCourts = walkupStatusHtml({
       numWalkup: 2,
       avgQueueLength: 2,
       lastQueueReportAt: new Date().toISOString(),
     })
-    expect(html).toContain('queue ~2')
-    expect(html).toContain('est. 30 min wait')
+    expect(twoCourts).toContain('queue ~2')
+    expect(twoCourts).toContain('est. 60 min wait')
+
+    const oneCourt = walkupStatusHtml({
+      numWalkup: 1,
+      avgQueueLength: 2,
+      lastQueueReportAt: new Date().toISOString(),
+    })
+    expect(oneCourt).toContain('est. 120 min wait')
   })
 
   it('rounds the displayed average to one decimal place', () => {

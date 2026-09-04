@@ -5,7 +5,12 @@ export function minutesAgo(iso: string | null): string {
   return mins === 1 ? '1 min ago' : `${mins} min ago`
 }
 
-const MINUTES_PER_GROUP = 15
+// A group typically holds a court for about an hour. With `numWalkup`
+// courts turning over in parallel, `queueLength` groups waiting clears in
+// roughly queueLength / numWalkup "rounds" of that length — not a flat
+// per-group constant, since more courts should shorten the wait and more
+// groups waiting should lengthen it.
+const GAME_DURATION_MINUTES = 60
 
 export function reservableStatusHtml(params: {
   numReservable: number
@@ -45,7 +50,7 @@ export function walkupStatusHtml(params: {
 
   if (avgQueueLength != null) {
     const avg = Math.round(avgQueueLength * 10) / 10
-    const etaMin = Math.round(avgQueueLength * MINUTES_PER_GROUP)
+    const etaMin = Math.round((avgQueueLength / numWalkup) * GAME_DURATION_MINUTES)
     return `<div class="status status-queue">${label} — queue ~${avg} (est. ${etaMin} min wait, ${minutesAgo(lastQueueReportAt)})</div>`
   }
   return `<div class="status status-unknown">${label} — no recent queue report</div>`
