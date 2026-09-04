@@ -15,3 +15,10 @@ export interface CourtStatus {
   avg_queue_length: number | null
   last_queue_report_at: string | null
 }
+
+export interface ReportHistoryEntry {
+  report_type: 'reservable_free' | 'queue_length'
+  count_free: number | null
+  queue_length: number | null
+  created_at: string
+}

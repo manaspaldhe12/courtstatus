@@ -9,5 +9,8 @@ export default defineConfig({
     include: ['tests/db/**/*.test.ts'],
     hookTimeout: 30_000,
     testTimeout: 30_000,
+    // Each test file does its own `drop schema public cascade` against the
+    // one shared throwaway Postgres, so files must not run concurrently.
+    fileParallelism: false,
   },
 })

@@ -1,5 +1,7 @@
 import { supabase } from './supabaseClient'
-import type { CourtStatus } from '../models/Location'
+import type { CourtStatus, ReportHistoryEntry } from '../models/Location'
+
+const HISTORY_LIMIT = 20
 
 export async function fetchCourtStatuses(): Promise<CourtStatus[]> {
   const { data, error } = await supabase
@@ -9,6 +11,18 @@ export async function fetchCourtStatuses(): Promise<CourtStatus[]> {
 
   if (error) throw error
   return data as CourtStatus[]
+}
+
+export async function fetchReportHistory(locationId: string): Promise<ReportHistoryEntry[]> {
+  const { data, error } = await supabase
+    .from('court_report_history')
+    .select('report_type, count_free, queue_length, created_at')
+    .eq('location_id', locationId)
+    .order('created_at', { ascending: false })
+    .limit(HISTORY_LIMIT)
+
+  if (error) throw error
+  return data as ReportHistoryEntry[]
 }
 
 export async function submitReservableFree(locationId: string, countFree: number, deviceId: string): Promise<void> {

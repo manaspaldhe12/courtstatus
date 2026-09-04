@@ -17,6 +17,16 @@ Court directory data from [SF Rec & Park](https://www.sfrecpark.org/1446/Tennis-
   nobody (including the frontend) can read raw `reports` rows directly —
   see `supabase/migrations/0001_init.sql` for the RLS policies and the
   per-device throttle trigger.
+- `court_report_history` (`supabase/migrations/0002_report_history.sql`) —
+  a second, narrower view backing each court's detail page: the last 7
+  days of reports, with `report_type`/value/`created_at` only — no
+  `device_id`, no `id`. It doesn't reverse the "raw reports stay private"
+  rule above; `device_id` is the only field that was ever sensitive, and
+  it's still never exposed.
+- Each court has its own page at `#/court/<slug>` (client-side hash
+  routing — see `src/router.ts` — since a real path would need GitHub
+  Pages server-side rewrite tricks that a hash avoids entirely), showing
+  the same status plus that report history feed.
 
 ## Expected behavior
 
@@ -69,7 +79,10 @@ exactly two values — **never** the `service_role` key, only the public ones:
 Steps:
 
 1. Create a new Supabase project (free tier is enough — see note below).
-2. In the SQL Editor, run `supabase/migrations/0001_init.sql`, then `supabase/seed.sql`.
+2. In the SQL Editor, run every file in `supabase/migrations/` in order
+   (`0001_init.sql`, then `0002_report_history.sql`), then `supabase/seed.sql`.
+   Already set up before `0002` existed? Just run that one file — it's
+   additive, nothing to redo.
 3. Copy the Project URL and anon key from Project Settings → API.
 4. In this GitHub repo: **Settings → Secrets and variables → Actions → Secrets**,
    add `SUPABASE_URL` and `SUPABASE_ANON_KEY` with those two values. Using
@@ -134,9 +147,11 @@ npm run test:watch
   stops returning a report, the UI reverts to "no recent report" without a
   page reload.
 
-**Database (`tests/db/`)** — runs the actual `supabase/migrations/0001_init.sql`
+**Database (`tests/db/`)** — runs the actual `supabase/migrations/*.sql`
 + `supabase/seed.sql` against a throwaway Postgres and asserts against real
-SQL, not a JS reimplementation of it. This is what actually proves the
+SQL, not a JS reimplementation of it (`tests/db/reportHistory.test.ts`
+covers `court_report_history` — most importantly, that it never leaks
+`device_id`). This is what actually proves the
 TTL-decay logic in the `court_status` view is correct — including the exact
 behavior asked for: a status like `queue ~2 (est. 120 min wait, 1 min ago)`
 reverting to "no recent report" once enough time passes. Rather than waiting

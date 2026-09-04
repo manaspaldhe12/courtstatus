@@ -1,19 +1,19 @@
 import type { CourtStatus } from '../models/Location'
 import { reservableStatusHtml, walkupStatusHtml } from './StatusBadge'
 import { openReportModal } from './ReportModal'
+import { courtHref } from '../router'
 
-export function createCourtCard(court: CourtStatus): HTMLElement {
-  const card = document.createElement('article')
-  card.className = 'court-card'
-
+// Shared between the list card and the court detail page so the two never
+// drift apart on what a court's status actually says.
+export function courtStatusBodyHtml(court: CourtStatus, headingHtml: string): string {
   const meta: string[] = []
   if (court.zip) meta.push(court.zip)
   if (court.lights) meta.push('lights')
   if (court.restrooms) meta.push('restrooms')
 
-  card.innerHTML = `
+  return `
     <div class="court-card-header">
-      <h2>${court.name}</h2>
+      ${headingHtml}
       <div class="court-meta">${meta.join(' · ')}</div>
     </div>
     ${reservableStatusHtml({
@@ -29,6 +29,13 @@ export function createCourtCard(court: CourtStatus): HTMLElement {
       lastQueueReportAt: court.last_queue_report_at,
     })}
   `
+}
+
+export function createCourtCard(court: CourtStatus): HTMLElement {
+  const card = document.createElement('article')
+  card.className = 'court-card'
+
+  card.innerHTML = courtStatusBodyHtml(court, `<h2><a href="${courtHref(court.slug)}">${court.name}</a></h2>`)
 
   if (court.crowd_reportable && (court.num_reservable > 0 || court.num_walkup > 0)) {
     const button = document.createElement('button')
